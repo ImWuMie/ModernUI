@@ -99,8 +99,8 @@ public class TestFragment extends Fragment {
         Configurator.setRootLevel(Level.DEBUG);
 
         try (ModernUI app = new ModernUI()) {
-            app.getTheme().applyStyle(R.style.Theme_Material3_Light, true);
-            //app.getTheme().applyStyle(R.style.ThemeOverlay_Material3_Light_Rust, true);
+            app.getTheme().applyStyle(R.style.Theme_Material3_Dark, true);
+//            app.getTheme().applyStyle(R.style.ThemeOverlay_Material3_Light_Rust, true);
             app.run(new TestFragment());
         }
         AudioManager.getInstance().close();
