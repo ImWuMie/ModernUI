@@ -4,7 +4,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
-archivesBaseName = 'ModernUI'
+archivesBaseName = 'ModernUI-Core'
 
 configurations {
     shadow

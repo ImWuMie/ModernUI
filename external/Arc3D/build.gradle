@@ -6,6 +6,8 @@ apply plugin: 'java-library'
 version = "${arc3d_version}"
 group = 'icyllis.arc3d'
 
+archivesBaseName = 'Arc3D-C'
+
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 repositories {
