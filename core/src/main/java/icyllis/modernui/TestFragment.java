@@ -99,8 +99,8 @@ public class TestFragment extends Fragment {
         Configurator.setRootLevel(Level.DEBUG);
 
         try (ModernUI app = new ModernUI()) {
-            app.getTheme().applyStyle(R.style.Theme_Material3_Dark, true);
-//            app.getTheme().applyStyle(R.style.ThemeOverlay_Material3_Light_Rust, true);
+            //app.getTheme().applyStyle(R.style.Theme_Material3_Light, true);
+            app.getTheme().applyStyle(R.style.ThemeOverlay_Material3_Dark_Rust, true);
             app.run(new TestFragment());
         }
         AudioManager.getInstance().close();
@@ -727,12 +727,12 @@ public class TestFragment extends Fragment {
                         menu.setGroupDividerEnabled(true);
                         MenuItem item;
                         item = menu.add(2, Menu.NONE, Menu.NONE, "Align start");
-                        item.setAlphabeticShortcut('s', KeyEvent.META_CTRL_ON);
+                        item.setAlphabeticShortcut('s');
                         item.setChecked(true);
                         item = menu.add(2, Menu.NONE, Menu.NONE, "Align center");
-                        item.setAlphabeticShortcut('d', KeyEvent.META_CTRL_ON);
+                        item.setAlphabeticShortcut('d');
                         item = menu.add(2, Menu.NONE, Menu.NONE, "Align end");
-                        item.setAlphabeticShortcut('f', KeyEvent.META_CTRL_ON);
+                        item.setAlphabeticShortcut('f');
                         menu.setGroupCheckable(2, true, true);
                         SubMenu subMenu = menu.addSubMenu("New");
                         subMenu.add("Document");
@@ -740,13 +740,14 @@ public class TestFragment extends Fragment {
                         menu.add(1, Menu.NONE, Menu.NONE, "Delete");
                     });
                 }
-                v.setClickable(true);
+                //v.setClickable(true);
                 p.gravity = Gravity.CENTER;
                 addView(v, p);
             }
             LOGGER.info((System.nanoTime() - start) / 1000000D);
             addView(new DView(getContext()), new LayoutParams(dp(120),
                     dp(120)));
+            setClipToPadding(false);
 
             //addView(new DView(ITimeInterpolator.VISCOUS_FLUID, 30), new LinearLayout.LayoutParams(60, 20));
             /*cAnim = new Animation(200)
@@ -979,17 +980,22 @@ public class TestFragment extends Fragment {
                 setClickable(true);
                 var icon = new BuiltinIconDrawable(getContext().getResources(),
                         BuiltinIconDrawable.RADIO_SMALL);
-                setBackground(icon);
+                setForeground(icon);
+                ShapeDrawable bg = new ShapeDrawable();
+                bg.setCornerRadius(4);
+                bg.setColor(mColorBackground);
+                setBackground(bg);
+                setElevation(10);
             }
 
-            @Override
+            /*@Override
             public void draw(Canvas canvas) {
                 Paint paint = Paint.obtain();
                 paint.setColor(mColorBackground);
                 canvas.drawRoundRect(0, 1, getWidth(), getHeight() - 2, 4, paint);
                 paint.recycle();
                 super.draw(canvas);
-            }
+            }*/
 
             @Override
             protected void onDraw(@Nonnull Canvas canvas) {

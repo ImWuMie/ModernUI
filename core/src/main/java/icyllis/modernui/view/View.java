@@ -1,6 +1,6 @@
 /*
  * Modern UI.
- * Copyright (C) 2019-2021 BloCamLimb. All rights reserved.
+ * Copyright (C) 2020-2025 BloCamLimb. All rights reserved.
  *
  * Modern UI is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,6 +14,23 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with Modern UI. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * This file incorporates work covered by the following copyright and
+ * permission notice:
+ *
+ *   Copyright (C) 2006 The Android Open Source Project
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
  */
 
 package icyllis.modernui.view;
@@ -22,8 +39,16 @@ import icyllis.modernui.ModernUI;
 import icyllis.modernui.R;
 import icyllis.modernui.animation.AnimationUtils;
 import icyllis.modernui.animation.StateListAnimator;
-import icyllis.modernui.annotation.*;
-import icyllis.modernui.core.*;
+import icyllis.modernui.annotation.AttrRes;
+import icyllis.modernui.annotation.CallSuper;
+import icyllis.modernui.annotation.NonNull;
+import icyllis.modernui.annotation.Nullable;
+import icyllis.modernui.annotation.StyleRes;
+import icyllis.modernui.annotation.UiThread;
+import icyllis.modernui.core.Choreographer;
+import icyllis.modernui.core.Context;
+import icyllis.modernui.core.Core;
+import icyllis.modernui.core.Handler;
 import icyllis.modernui.graphics.*;
 import icyllis.modernui.graphics.drawable.Drawable;
 import icyllis.modernui.graphics.drawable.ShapeDrawable;
@@ -33,18 +58,26 @@ import icyllis.modernui.resources.TypedValue;
 import icyllis.modernui.text.TextUtils;
 import icyllis.modernui.transition.Fade;
 import icyllis.modernui.transition.Transition;
-import icyllis.modernui.util.*;
+import icyllis.modernui.util.AttributeSet;
+import icyllis.modernui.util.FloatProperty;
+import icyllis.modernui.util.IntProperty;
+import icyllis.modernui.util.LayoutDirection;
+import icyllis.modernui.util.SparseArray;
+import icyllis.modernui.util.StateSet;
 import icyllis.modernui.view.ContextMenu.ContextMenuInfo;
 import icyllis.modernui.view.menu.MenuBuilder;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -887,13 +920,6 @@ public class View implements Drawable.Callback {
                         | StateSet.VIEW_STATE_FOCUSED | StateSet.VIEW_STATE_ENABLED
                         | StateSet.VIEW_STATE_PRESSED);
     }
-
-    /**
-     * Temporary Rect currently for use in setBackground().  This will probably
-     * be extended in the future to hold our own class with more than just
-     * a Rect. :)
-     */
-    private static final ThreadLocal<Rect> sThreadLocal = ThreadLocal.withInitial(Rect::new);
 
     /**
      * @see #setId(int)
@@ -2318,6 +2344,8 @@ public class View implements Drawable.Callback {
 
     private int[] mDrawableState = null;
 
+    ViewOutlineProvider mOutlineProvider = ViewOutlineProvider.BACKGROUND;
+
     /**
      * Animator that automatically runs based on state changes.
      */
@@ -2828,8 +2856,7 @@ public class View implements Drawable.Callback {
             } else {
                 final Rect clipRect;
                 if (clip) {
-                    clipRect = sThreadLocal.get();
-                    clipRect.set(0, 0, mRight - mLeft, mBottom - mTop);
+                    clipRect = new Rect(0, 0, mRight - mLeft, mBottom - mTop);
                     clipRect.intersectUnchecked(mRenderNode.getClipBounds());
                 } else {
                     clipRect = mRenderNode.getClipBounds();
@@ -2893,10 +2920,7 @@ public class View implements Drawable.Callback {
         if (background == null) {
             return;
         }
-        if (mBackgroundSizeChanged) {
-            background.setBounds(0, 0, mRight - mLeft, mBottom - mTop);
-            mBackgroundSizeChanged = false;
-        }
+        setBackgroundBounds();
 
         final int scrollX = mScrollX;
         final int scrollY = mScrollY;
@@ -2906,6 +2930,14 @@ public class View implements Drawable.Callback {
             canvas.translate(scrollX, scrollY);
             background.draw(canvas);
             canvas.translate(-scrollX, -scrollY);
+        }
+    }
+
+    void setBackgroundBounds() {
+        if (mBackgroundSizeChanged && mBackground != null) {
+            mBackground.setBounds(0, 0, mRight - mLeft, mBottom - mTop);
+            mBackgroundSizeChanged = false;
+            rebuildOutline();
         }
     }
 
@@ -4388,6 +4420,7 @@ public class View implements Drawable.Callback {
 
             invalidate(dirty.left + scrollX, dirty.top + scrollY,
                     dirty.right + scrollX, dirty.bottom + scrollY);
+            rebuildOutline();
         }
     }
 
@@ -5073,8 +5106,10 @@ public class View implements Drawable.Callback {
      *                  hierarchy
      * @param refocus   when propagate is true, specifies whether to request the
      *                  root view place new focus
+     * @hidden
      */
-    void clearFocusInternal(View focused, boolean propagate, boolean refocus) {
+    @ApiStatus.Internal
+    public void clearFocusInternal(View focused, boolean propagate, boolean refocus) {
         if ((mPrivateFlags & PFLAG_FOCUSED) != 0) {
             mPrivateFlags &= ~PFLAG_FOCUSED;
             clearParentsWantFocus();
@@ -7261,6 +7296,7 @@ public class View implements Drawable.Callback {
                 }
             }
         }
+        rebuildOutline();
     }
 
     /**
@@ -7391,6 +7427,7 @@ public class View implements Drawable.Callback {
     public void setElevation(float elevation) {
         if (mRenderNode.setElevation(elevation)) {
             invalidate();
+            mPrivateFlags |= PFLAG_DRAWN;
         }
     }
 
@@ -7766,6 +7803,7 @@ public class View implements Drawable.Callback {
         if (mAlpha != alpha) {
             mAlpha = alpha;
             invalidate();
+            mRenderNode.setAlpha(mAlpha * mTransitionAlpha);
         }
     }
 
@@ -7780,6 +7818,7 @@ public class View implements Drawable.Callback {
         if (mTransitionAlpha != alpha) {
             mTransitionAlpha = alpha;
             invalidate();
+            mRenderNode.setAlpha(mAlpha * mTransitionAlpha);
         }
     }
 
@@ -7906,6 +7945,77 @@ public class View implements Drawable.Callback {
     }
 
     /**
+     * Sets the {@link ViewOutlineProvider} of the view, which generates the Outline that defines
+     * the shape of the shadow it casts, and enables outline clipping.
+     * <p>
+     * The default ViewOutlineProvider, {@link ViewOutlineProvider#BACKGROUND}, queries the Outline
+     * from the View's background drawable, via {@link Drawable#getOutline(Outline)}. Changing the
+     * outline provider with this method allows this behavior to be overridden.
+     * <p>
+     * If the ViewOutlineProvider is null, if querying it for an outline returns false,
+     * or if the produced Outline is {@link Outline#isEmpty()}, shadows will not be cast.
+     * <p>
+     * Only outlines that return true from {@link Outline#canClip()} may be used for clipping.
+     *
+     * @see #setClipToOutline(boolean)
+     * @see #getClipToOutline()
+     * @see #getOutlineProvider()
+     */
+    public void setOutlineProvider(ViewOutlineProvider provider) {
+        if (mOutlineProvider != provider) {
+            mOutlineProvider = provider;
+            invalidateOutline();
+        }
+    }
+
+    /**
+     * Returns the current {@link ViewOutlineProvider} of the view, which generates the Outline
+     * that defines the shape of the shadow it casts, and enables outline clipping.
+     *
+     * @see #setOutlineProvider(ViewOutlineProvider)
+     */
+    public ViewOutlineProvider getOutlineProvider() {
+        return mOutlineProvider;
+    }
+
+    /**
+     * Called to rebuild this View's Outline from its {@link ViewOutlineProvider outline provider}
+     *
+     * @see #setOutlineProvider(ViewOutlineProvider)
+     */
+    public void invalidateOutline() {
+        rebuildOutline();
+
+        invalidate();
+    }
+
+    /**
+     * Internal version of {@link #invalidateOutline()} which invalidates the
+     * outline without invalidating the view itself. This is intended to be called from
+     * within methods in the View class itself which are the result of the view being
+     * invalidated already. For example, when we are drawing the background of a View,
+     * we invalidate the outline in case it changed in the meantime, but we do not
+     * need to invalidate the view because we're already drawing the background as part
+     * of drawing the view in response to an earlier invalidation of the view.
+     */
+    private void rebuildOutline() {
+        // Unattached views ignore this signal, and outline is recomputed in onAttachedToWindow()
+        if (mAttachInfo == null) return;
+
+        if (mOutlineProvider == null) {
+            // no provider, remove outline
+            mRenderNode.setOutline(null);
+        } else {
+            final Outline outline = mAttachInfo.mTmpOutline;
+            outline.setEmpty();
+            outline.setAlpha(1.0f);
+
+            mOutlineProvider.getOutline(this, outline);
+            mRenderNode.setOutline(outline);
+        }
+    }
+
+    /**
      * Return the visibility value of the least visible component passed.
      */
     int combineVisibility(int vis1, int vis2) {
@@ -8022,11 +8132,15 @@ public class View implements Drawable.Callback {
      *
      * @see #onDetachedFromWindow()
      */
+    @MustBeInvokedByOverriders
     @CallSuper
     protected void onAttachedToWindow() {
         mPrivateFlags3 &= ~PFLAG3_IS_LAID_OUT;
 
         jumpDrawablesToCurrentState();
+
+        // rebuild, since Outline not maintained while View is detached
+        rebuildOutline();
     }
 
     /**
@@ -9001,11 +9115,7 @@ public class View implements Drawable.Callback {
             // left / right or right / left depending on the resolved layout direction.
             // If start / end padding are not defined, use the left / right ones.
             if (mBackground != null && (!mLeftPaddingDefined || !mRightPaddingDefined)) {
-                Rect padding = sThreadLocal.get();
-                if (padding == null) {
-                    padding = new Rect();
-                    sThreadLocal.set(padding);
-                }
+                Rect padding = new Rect();
                 mBackground.getPadding(padding);
                 if (!mLeftPaddingDefined) {
                     mUserPaddingLeftInitial = padding.left;
@@ -9329,6 +9439,7 @@ public class View implements Drawable.Callback {
 
         if (changed) {
             requestLayout();
+            invalidateOutline();
         }
     }
 
@@ -9691,11 +9802,7 @@ public class View implements Drawable.Callback {
         }
 
         if (background != null) {
-            Rect padding = sThreadLocal.get();
-            if (padding == null) {
-                padding = new Rect();
-                sThreadLocal.set(padding);
-            }
+            Rect padding = new Rect();
             resetResolvedDrawablesInternal();
             background.setLayoutDirection(getLayoutDirection());
             if (background.getPadding(padding)) {
@@ -9762,6 +9869,7 @@ public class View implements Drawable.Callback {
 
         mBackgroundSizeChanged = true;
         invalidate();
+        invalidateOutline();
     }
 
     /**
