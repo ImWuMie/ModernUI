@@ -3,7 +3,7 @@
 [![Discord](https://img.shields.io/discord/696234198767501363?color=green&label=Discord&style=flat)](https://discord.gg/kmyGKt2)
 
 ### 将要添加
-  - 1. Mipmap Blur
+  -Mipmap Blur
 
 ### Description
 Modern UI (by Icyllis Milica) is a desktop application framework designed for standalone 2D and 3D rendering software development.
