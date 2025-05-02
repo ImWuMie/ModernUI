@@ -5,6 +5,9 @@ import icyllis.arc3d.core.Rect2fc;
 import icyllis.arc3d.core.RefCnt;
 import icyllis.arc3d.core.SharedPtr;
 import icyllis.arc3d.sketch.Image;
+import icyllis.arc3d.sketch.Matrix;
+import icyllis.arc3d.sketch.Matrixc;
+import org.jspecify.annotations.Nullable;
 
 public final class MipmapBlurShader implements Shader {
     @SharedPtr
@@ -20,16 +23,16 @@ public final class MipmapBlurShader implements Shader {
     }
 
     @SharedPtr
-    public static Shader make(Image image, float radius) {
+    public static Shader make(Image image, float radius, @Nullable Matrixc localMatrix) {
         Rect2fc subset = image != null
                 ? new Rect2f(0, 0, image.getWidth(), image.getHeight())
                 : Rect2f.empty();
 
-        return makeSubset(image,subset,radius);
+        return makeSubset(image, subset, radius, localMatrix);
     }
 
     @SharedPtr
-    public static Shader makeSubset(Image image, Rect2fc subset,float radius) {
+    public static Shader makeSubset(Image image, Rect2fc subset, float radius, @Nullable Matrixc localMatrix) {
         if (!Float.isFinite(radius)) {
             // empty, infinite or NaN
             return EmptyShader.INSTANCE;
@@ -47,7 +50,10 @@ public final class MipmapBlurShader implements Shader {
             return null;
         }
 
-        return new MipmapBlurShader(image, subset, radius);
+        Shader s = new MipmapBlurShader(image, subset, radius);
+        Matrix lm = localMatrix != null ? new Matrix(localMatrix) : new Matrix();
+        return new LocalMatrixShader(s, // move
+                lm);
     }
 
     @Override

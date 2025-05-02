@@ -5,10 +5,11 @@ import icyllis.modernui.annotation.NonNull;
 import icyllis.modernui.core.Core;
 
 public class MipmapBlurShader extends Shader {
-    public MipmapBlurShader(@NonNull Image image, float radius) {
+    public MipmapBlurShader(@NonNull Image image, float radius,Matrix localMatrix) {
         var shader = icyllis.arc3d.sketch.shaders.MipmapBlurShader.make(
                 RefCnt.create(image.getNativeImage()),
-                radius
+                radius,
+                localMatrix
         );
         if (shader == null) {
             throw new IllegalArgumentException();

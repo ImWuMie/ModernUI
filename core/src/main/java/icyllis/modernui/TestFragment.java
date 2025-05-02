@@ -35,10 +35,7 @@ import icyllis.modernui.core.Context;
 import icyllis.modernui.core.Core;
 import icyllis.modernui.fragment.Fragment;
 import icyllis.modernui.graphics.*;
-import icyllis.modernui.graphics.drawable.BuiltinIconDrawable;
-import icyllis.modernui.graphics.drawable.ColorDrawable;
-import icyllis.modernui.graphics.drawable.Drawable;
-import icyllis.modernui.graphics.drawable.ShapeDrawable;
+import icyllis.modernui.graphics.drawable.*;
 import icyllis.modernui.graphics.text.FontFamily;
 import icyllis.modernui.graphics.text.LineBreakConfig;
 import icyllis.modernui.graphics.text.ShapedText;
@@ -325,6 +322,7 @@ public class TestFragment extends Fragment {
         boolean a = false;
         float rad = 50;
         Image mTestImage;
+        Matrix mTestMatrix;
         Shader mTestImageShader;
         LinearGradient mTestLinearGrad;
         AngularGradient mTestAngularGrad;
@@ -459,7 +457,10 @@ public class TestFragment extends Fragment {
                 Image image = Image.createTextureFromBitmap(bitmap,true);
                 if (image != null) {
                     mTestImage = image;
-                    mTestImageShader = new MipmapBlurShader(image,50f);
+                    var matrix = new Matrix();
+                    matrix.setScale(3f,3f);
+                    mTestMatrix = matrix;
+                    mTestImageShader = new MipmapBlurShader(image,50f,matrix);
                 } else {
                     LOGGER.warn("Failed to create image");
                 }
@@ -883,12 +884,12 @@ public class TestFragment extends Fragment {
             canvas.save();
             paint.setShader(mTestImageShader);
 
-            if ((rad += 0.5f) > 50) {
+            if ((rad += 1f) > 500) {
                 rad = 1f;
             }
 
             mTestImageShader.release();
-            mTestImageShader = new MipmapBlurShader(mTestImage,rad);
+            mTestImageShader = new MipmapBlurShader(mTestImage,rad,mTestMatrix);
             invalidate();
 
             paint.setStyle(Paint.FILL);
