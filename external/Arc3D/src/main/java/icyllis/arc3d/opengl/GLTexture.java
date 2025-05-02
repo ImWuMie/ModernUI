@@ -108,6 +108,15 @@ public final class GLTexture extends GLImage {
                 handle);
     }
 
+    @SharedPtr
+    public static GLTexture wrap(Context context,
+                                 int handle,
+                                 GLImageDesc desc) {
+        return new GLTexture(context, desc,
+                new GLTextureMutableState(),
+                handle);
+    }
+
     static int internalCreateTexture(GLDevice device, GLImageDesc desc) {
         assert desc.mTarget != GL_RENDERBUFFER;
         int width = desc.getWidth(), height = desc.getHeight();

@@ -64,6 +64,12 @@ public class Image implements AutoCloseable {
         mImage = Objects.requireNonNull(image);
     }
 
+    @Nullable
+    public static Image createTextureFromNativeImage(icyllis.arc3d.sketch.Image image) {
+        if (image == null) return null;
+        return new Image(image);
+    }
+
     /**
      * Create an image that backed by a GPU texture with the given bitmap.
      * Whether the bitmap is immutable or not, the bitmap can be safely closed
