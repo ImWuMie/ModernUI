@@ -940,7 +940,7 @@ public class FragmentHelpers {
         final int srcAlphaType = imageToDraw.getAlphaType();
         final int dstAlphaType = ColorInfo.AT_PREMUL;
         if (imageToDraw.isAlphaOnly()) {
-//            keyBuilder.addInt(FragmentStage.kBlend_BuiltinStageID);
+            keyBuilder.addInt(FragmentStage.kBlend_BuiltinStageID);
 
             // src, ignore color space transform
             appendMipmapBlurShaderBlock(keyContext,
@@ -955,22 +955,22 @@ public class FragmentHelpers {
                     view);
 
             // dst
-//            appendRGBOpaquePaintColorBlock(
-//                    keyContext,
-//                    keyBuilder,
-//                    uniformDataGatherer,
-//                    textureDataGatherer
-//            );
-//
-//            appendFixedBlendMode(
-//                    keyContext,
-//                    keyBuilder,
-//                    uniformDataGatherer,
-//                    textureDataGatherer,
-//                    BlendMode.DST_IN
-//            );
+            appendRGBOpaquePaintColorBlock(
+                    keyContext,
+                    keyBuilder,
+                    uniformDataGatherer,
+                    textureDataGatherer
+            );
+
+            appendFixedBlendMode(
+                    keyContext,
+                    keyBuilder,
+                    uniformDataGatherer,
+                    textureDataGatherer,
+                    BlendMode.DST_IN
+            );
         } else {
-//            keyBuilder.addInt(FragmentStage.kCompose_BuiltinStageID);
+            keyBuilder.addInt(FragmentStage.kCompose_BuiltinStageID);
 
             appendMipmapBlurShaderBlock(keyContext,
                     keyBuilder,
@@ -983,13 +983,13 @@ public class FragmentHelpers {
                     srcAlphaType,
                     view);
 
-//            appendColorSpaceUniforms(
-//                    imageToDraw.getColorSpace(),
-//                    srcAlphaType,
-//                    keyContext.targetInfo().colorSpace(),
-//                    dstAlphaType,
-//                    uniformDataGatherer);
-//            keyBuilder.addInt(FragmentStage.kColorSpaceXformColorFilter_BuiltinStageID);
+            appendColorSpaceUniforms(
+                    imageToDraw.getColorSpace(),
+                    srcAlphaType,
+                    keyContext.targetInfo().colorSpace(),
+                    dstAlphaType,
+                    uniformDataGatherer);
+            keyBuilder.addInt(FragmentStage.kColorSpaceXformColorFilter_BuiltinStageID);
         }
     }
 
