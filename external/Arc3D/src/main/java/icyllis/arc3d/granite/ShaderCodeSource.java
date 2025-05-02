@@ -121,6 +121,7 @@ public class ShaderCodeSource {
                 return s * x;
             }
             """;
+
     static {
         //noinspection ConstantValue
         assert PixelUtils.kColorSpaceXformFlagUnpremul == 0x1;
@@ -133,6 +134,7 @@ public class ShaderCodeSource {
         //noinspection ConstantValue
         assert PixelUtils.kColorSpaceXformFlagPremul == 0x10;
     }
+
     // We have 7 source coefficients and 7 destination coefficients. We pass them via two vec4 arrays;
     // In std140, this arrangement is much more efficient than a simple array of scalars, which
     // vec4 array and mat3 are always vec4 aligned
@@ -172,6 +174,7 @@ public class ShaderCodeSource {
                 return color;
             }
             """;
+
     static {
         //noinspection ConstantValue
         assert Shader.TILE_MODE_REPEAT == 0;
@@ -182,6 +185,7 @@ public class ShaderCodeSource {
         //noinspection ConstantValue
         assert Shader.TILE_MODE_DECAL == 3;
     }
+
     // t.y < 0 means out of bounds, then color will be (0,0,0,0)
     // if any component is out of bounds, then that component is 0,
     // and (s.x * s.y) is 0, this eliminates branch
@@ -338,6 +342,7 @@ public class ShaderCodeSource {
     /**
      * We store all polar colors with hue in the first component, so this "LCH -> Lab" transform
      * actually takes "HCL". This is also used to do the same polar transform for OkHCL to OkLAB.
+     *
      * @see GradientShader
      */
     private static final String PRIV_CSS_HCL_TO_LAB = """
@@ -662,12 +667,14 @@ public class ShaderCodeSource {
                 return f;
             }
             """;
+
     static {
         //noinspection ConstantValue
         assert SamplerDesc.FILTER_NEAREST == 0;
         //noinspection ConstantValue
-        assert SamplerDesc.FILTER_LINEAR  == 1;
+        assert SamplerDesc.FILTER_LINEAR == 1;
     }
+
     // kLinearInset make sure we don't touch an outer row or column with a weight of 0 when linear filtering.
     private static final String PRIV_SAMPLE_IMAGE_SUBSET = """
             vec4 _sample_image_subset(vec2 pos,
@@ -906,6 +913,41 @@ public class ShaderCodeSource {
                     ? smoothstep(-smoothRad, 0.0, dis)
                     : saturate(0.5 + dis/fwidth(dis));
                 return float4(0.5 + fields.w * (-alpha + 0.5));
+            }
+            """;
+
+    public static final String MIPMAP_BLUR_WEIGHT_SHADER = """
+            float _mipmap_blur_weight(float t, float log2radius, float gamma)
+            {
+                return exp(-gamma*pow(log2radius-t,2.));
+            }
+            """;
+
+    public static final String MIPMAP_BLUR_SAMPLE_BLURED_SHADER = """
+            vec4 _mipmap_blur_sample_blured(vec2 uv, float radius, float gamma, sampler2D s)
+            {
+                vec4 pix = vec4(0.);
+                float norm = 0.;
+                //weighted integration over mipmap levels
+                for(float i = 0.; i < 10.; i += 0.5)
+                {
+                    float k = _mipmap_blur_weight(i, log2(radius), gamma);
+                    pix += k*texture(s, uv, i);
+                    norm += k;
+                }
+                //nomalize, and a bit of brigtness hacking
+                return pix*pow(norm,-0.95);
+            }
+            """;
+
+    public static final String MIPMAP_BLUR_SHADER = """
+            vec4 mipmap_blur_shader(vec2 coords,
+                                     vec2 invImageSize,
+                                     vec4 subset,
+                                     float radius,
+                                     sampler2D s) {
+                return _mipmap_blur_sample_blured(coords * invImageSize, radius, 0.5,s);
+//return texture(s,coords * invImageSize);
             }
             """;
     /**
@@ -1220,6 +1262,7 @@ public class ShaderCodeSource {
         map.put(BlendMode.HARD_MIX, BLEND_HARD_MIX);
         BLEND_MODE_FUNCTIONS = map;
     }
+
     // we know that Photoshop uses these values
     // instead of (0.3, 0.59, 0.11)
     private static final String PRIV_BLEND_GET_LUM = """
@@ -1835,6 +1878,29 @@ public class ShaderCodeSource {
                 ShaderCodeSource::generateComposeExpression,
                 2
         );
+
+        // Custom
+        mBuiltinCodeSnippets[kMipmapBlur_BuiltinStageID] = new FragmentStage(
+                "MipmapBlur",
+                kLocalCoords_ReqFlag,
+                "mipmap_blur_shader",
+                List.of(
+                        MIPMAP_BLUR_WEIGHT_SHADER,
+                        MIPMAP_BLUR_SAMPLE_BLURED_SHADER,
+                        MIPMAP_BLUR_SHADER
+                ),
+                List.of(
+                        INV_IMAGE_SIZE,
+                        SUBSET,
+                        new Uniform(SLDataType.kFloat, "u_Radius")
+                ),
+                List.of(
+                        new Sampler(SLDataType.kSampler2D, "u_Sampler")
+                ),
+                ShaderCodeSource::generateDefaultExpression,
+                0
+        );
+
         for (int i = 0; i < BlendMode.COUNT; i++) {
             BlendMode mode = BlendMode.modeAt(i);
             String function = BLEND_MODE_FUNCTIONS.get(mode);

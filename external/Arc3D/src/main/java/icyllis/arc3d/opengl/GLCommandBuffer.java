@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 import static org.lwjgl.opengl.GL33C.*;
+import static org.lwjgl.opengl.GL45C.glGenerateTextureMipmap;
 
 /**
  * The OpenGL command buffer. The commands executed on {@link GLCommandBuffer} are
@@ -465,6 +466,14 @@ public final class GLCommandBuffer extends CommandBuffer {
             }
         }
 
+        if (dstImage.isMipmapped()) {
+            if (dsa) {
+                glGenerateTextureMipmap(target);
+            } else {
+                glGenerateMipmap(GL_TEXTURE_2D);
+            }
+        }
+
         gl.glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
         if (!dsa) {
@@ -781,12 +790,12 @@ public final class GLCommandBuffer extends CommandBuffer {
             // OpenGL ES does not support GL_TEXTURE_SWIZZLE_RGBA
             for (int i = 0; i < 4; ++i) {
                 int swiz = switch ((swizzle >> (i << 2)) & 0xF) {
-                    case Swizzle.COMPONENT_R    -> GL_RED;
-                    case Swizzle.COMPONENT_G    -> GL_GREEN;
-                    case Swizzle.COMPONENT_B    -> GL_BLUE;
-                    case Swizzle.COMPONENT_A    -> GL_ALPHA;
+                    case Swizzle.COMPONENT_R -> GL_RED;
+                    case Swizzle.COMPONENT_G -> GL_GREEN;
+                    case Swizzle.COMPONENT_B -> GL_BLUE;
+                    case Swizzle.COMPONENT_A -> GL_ALPHA;
                     case Swizzle.COMPONENT_ZERO -> GL_ZERO;
-                    case Swizzle.COMPONENT_ONE  -> GL_ONE;
+                    case Swizzle.COMPONENT_ONE -> GL_ONE;
                     default -> throw new AssertionError(swizzle);
                 };
                 // swizzle enums are sequential

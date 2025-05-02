@@ -51,7 +51,7 @@ public abstract class Image extends Resource {
      * Only valid when isMipmapped=true.
      * By default, we can't say mipmaps dirty or not, since texel data is undefined.
      */
-    private boolean mMipmapsDirty;
+    private boolean mMipmapsDirty = true;
 
     @SharedPtr
     private ReleaseCallback mReleaseCallback;

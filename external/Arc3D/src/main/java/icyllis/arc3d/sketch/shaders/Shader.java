@@ -38,7 +38,7 @@ import org.jspecify.annotations.NonNull;
  */
 public sealed interface Shader extends RefCounted
         permits BlendShader, ColorShader, EmptyShader,
-        GradientShader, ImageShader, LocalMatrixShader, RRectShader {
+        GradientShader, ImageShader, LocalMatrixShader, RRectShader, MipmapBlurShader {
 
     // TileModes sync with SamplerDesc::AddressMode
     /**

@@ -68,7 +68,11 @@ public class FragmentStage {
             kBlendModeBlender_BuiltinStageID = 24,
             kPorterDuffBlender_BuiltinStageID = 25,
             kPrimitiveColor_BuiltinStageID = 26,
-            kCompose_BuiltinStageID = 27;
+            kCompose_BuiltinStageID = 27,
+
+    // Custom Stages
+    kMipmapBlur_BuiltinStageID = 28;
+
     // Fixed blend modes hard code a specific blend function into the shader tree. This can be
     // valuable when an internal effect is known to always do a certain blend and we want to
     // benefit from inlining constants. It is also important for being able to convert the final
@@ -84,7 +88,7 @@ public class FragmentStage {
     // defined last in the enum. They are ordered to match BlendMode such that:
     //     (id - kFirstFixedBlend) == BlendMode).
     public static final int
-            kFirstFixedBlend_BuiltinStageID = 28;
+            kFirstFixedBlend_BuiltinStageID = 29;
     // this is not compile-time constant
     public static final int
             kLastFixedBlend_BuiltinStageID = kFirstFixedBlend_BuiltinStageID + BlendMode.COUNT - 1;

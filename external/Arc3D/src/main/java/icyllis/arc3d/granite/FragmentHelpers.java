@@ -24,6 +24,7 @@ import icyllis.arc3d.engine.Engine;
 import icyllis.arc3d.engine.ImageViewProxy;
 import icyllis.arc3d.engine.KeyBuilder;
 import icyllis.arc3d.engine.SamplerDesc;
+import icyllis.arc3d.opengl.GLDevice;
 import icyllis.arc3d.sketch.BlendMode;
 import icyllis.arc3d.sketch.Blender;
 import icyllis.arc3d.sketch.Matrix;
@@ -33,6 +34,9 @@ import icyllis.arc3d.sketch.effects.ColorFilter;
 import icyllis.arc3d.sketch.effects.ComposeColorFilter;
 import icyllis.arc3d.sketch.shaders.*;
 import org.jspecify.annotations.Nullable;
+
+import static icyllis.arc3d.engine.SamplerDesc.*;
+import static icyllis.arc3d.sketch.shaders.Shader.TILE_MODE_REPEAT;
 
 /**
  * Build {@link icyllis.arc3d.engine.Key PaintParamsKey} and collect
@@ -253,6 +257,26 @@ public class FragmentHelpers {
                 : SamplerDesc.make(filterMode);
 
         textureDataGatherer.add(view, samplerDesc); // move
+    }
+
+    public static void appendMipmapBlurShaderBlock(
+            KeyContext keyContext,
+            KeyBuilder keyBuilder,
+            UniformDataGatherer uniformDataGatherer,
+            TextureDataGatherer textureDataGatherer,
+            Rect2fc subset,
+            float radius,
+            int imageWidth, int imageHeight,
+            @ColorInfo.AlphaType int srcAT,
+            @SharedPtr ImageViewProxy view
+    ) {
+        uniformDataGatherer.write2f(1.f / imageWidth, 1.f / imageHeight);
+        uniformDataGatherer.write4f(subset.left(), subset.top(),
+                subset.right(), subset.bottom());
+        uniformDataGatherer.write1f(radius);
+//        keyBuilder.addInt(FragmentStage.kHWImageShader_BuiltinStageID);
+        keyBuilder.addInt(FragmentStage.kMipmapBlur_BuiltinStageID);
+        textureDataGatherer.add(view, SamplerDesc.make(FILTER_LINEAR, MIPMAP_MODE_LINEAR, ADDRESS_MODE_CLAMP_TO_EDGE)); // move
     }
 
     public static class GradientData {
@@ -636,6 +660,12 @@ public class FragmentHelpers {
                     uniformDataGatherer,
                     textureDataGatherer,
                     (RRectShader) shader);
+        } else if (shader instanceof MipmapBlurShader) {
+            append_to_key(keyContext,
+                    keyBuilder,
+                    uniformDataGatherer,
+                    textureDataGatherer,
+                    (MipmapBlurShader) shader);
         } else if (shader instanceof EmptyShader) {
             append_to_key(keyContext,
                     keyBuilder,
@@ -886,6 +916,81 @@ public class FragmentHelpers {
                 textureDataGatherer,
                 shader.getMode()
         );
+    }
+
+    private static void append_to_key(KeyContext keyContext,
+                                      KeyBuilder keyBuilder,
+                                      UniformDataGatherer uniformDataGatherer,
+                                      TextureDataGatherer textureDataGatherer,
+                                      @RawPtr MipmapBlurShader shader) {
+        if (!(shader.getImage() instanceof GraniteImage imageToDraw)) {
+            keyBuilder.addInt(FragmentStage.kError_BuiltinStageID);
+            return;
+        }
+
+        @SharedPtr
+        ImageViewProxy view = RefCnt.create(imageToDraw.getImageViewProxy());
+        if (view == null) {
+            keyBuilder.addInt(FragmentStage.kError_BuiltinStageID);
+            return;
+        }
+
+//        ((GLDevice) keyContext.getRecordingContext().getDevice()).generateMipmaps(view.getImage());
+
+        final int srcAlphaType = imageToDraw.getAlphaType();
+        final int dstAlphaType = ColorInfo.AT_PREMUL;
+        if (imageToDraw.isAlphaOnly()) {
+            keyBuilder.addInt(FragmentStage.kBlend_BuiltinStageID);
+
+            // src, ignore color space transform
+            appendMipmapBlurShaderBlock(keyContext,
+                    keyBuilder,
+                    uniformDataGatherer,
+                    textureDataGatherer,
+                    shader.getSubset(),
+                    shader.getRadius(),
+                    view.getWidth(),
+                    view.getHeight(),
+                    srcAlphaType,
+                    view);
+
+            // dst
+            appendRGBOpaquePaintColorBlock(
+                    keyContext,
+                    keyBuilder,
+                    uniformDataGatherer,
+                    textureDataGatherer
+            );
+
+            appendFixedBlendMode(
+                    keyContext,
+                    keyBuilder,
+                    uniformDataGatherer,
+                    textureDataGatherer,
+                    BlendMode.DST_IN
+            );
+        } else {
+            keyBuilder.addInt(FragmentStage.kCompose_BuiltinStageID);
+
+            appendMipmapBlurShaderBlock(keyContext,
+                    keyBuilder,
+                    uniformDataGatherer,
+                    textureDataGatherer,
+                    shader.getSubset(),
+                    shader.getRadius(),
+                    view.getWidth(),
+                    view.getHeight(),
+                    srcAlphaType,
+                    view);
+
+            appendColorSpaceUniforms(
+                    imageToDraw.getColorSpace(),
+                    srcAlphaType,
+                    keyContext.targetInfo().colorSpace(),
+                    dstAlphaType,
+                    uniformDataGatherer);
+            keyBuilder.addInt(FragmentStage.kColorSpaceXformColorFilter_BuiltinStageID);
+        }
     }
 
     private static void append_to_key(KeyContext keyContext,
