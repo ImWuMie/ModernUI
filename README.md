@@ -9,6 +9,9 @@
 Mipmap Blur
 ![MipmapBlur.png](https://img.picui.cn/free/2025/05/02/6814d2c992816.png)
 
+### 下一步
+  - 优化mipmap blur (写成💩了
+
 ### Description
 Modern UI (by Icyllis Milica) is a desktop application framework designed for standalone 2D and 3D rendering software development.
 It makes use of modern 3D graphical APIs and technologies to provide high real-time rendering performance.
