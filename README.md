@@ -8,6 +8,8 @@
 ### Screenshots
 Mipmap Blur
 ![MipmapBlur.png](https://img.picui.cn/free/2025/05/02/6814d2c992816.png)
+   test
+[![2025-05-03-10-21-07.png](https://i.postimg.cc/cCDcQVv9/2025-05-03-10-21-07.png)](https://postimg.cc/xNzHQpyM)
 
 ### 下一步
   - 优化mipmap blur (写成💩了
