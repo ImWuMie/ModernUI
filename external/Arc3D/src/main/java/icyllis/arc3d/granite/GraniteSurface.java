@@ -39,7 +39,7 @@ import org.jspecify.annotations.Nullable;
 public final class GraniteSurface extends Surface {
 
     @SharedPtr
-    public GraniteDevice mDevice;
+    public volatile GraniteDevice mDevice;
 
     public GraniteSurface(@SharedPtr GraniteDevice device) {
         super(device.getWidth(), device.getHeight());
