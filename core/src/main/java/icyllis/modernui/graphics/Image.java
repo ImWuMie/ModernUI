@@ -1,6 +1,6 @@
 /*
  * Modern UI.
- * Copyright (C) 2019-2024 BloCamLimb. All rights reserved.
+ * Copyright (C) 2021-2025 BloCamLimb. All rights reserved.
  *
  * Modern UI is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -64,46 +64,9 @@ public class Image implements AutoCloseable {
         mImage = Objects.requireNonNull(image);
     }
 
-    @Nullable
-    public static Image createTextureFromNativeImage(icyllis.arc3d.sketch.Image image) {
-        if (image == null) return null;
-        return new Image(image);
-    }
-
-    /**
-     * Create an image that backed by a GPU texture with the given bitmap.
-     * Whether the bitmap is immutable or not, the bitmap can be safely closed
-     * after the call.
-     * <p>
-     * Must be called after render system and UI system are initialized successfully,
-     * must be called from UI thread.
-     * <p>
-     * This method may fail if:
-     * <ul>
-     * <li>Bitmap is null or closed</li>
-     * <li>GPU device is lost (disconnected)</li>
-     * <li>The width or height of the bitmap exceeds the maximum dimension supported by the GPU</li>
-     * <li>The format of bitmap is not directly or indirectly supported by the GPU</li>
-     * <li>Unable to allocate sufficient GPU-only memory for the GPU texture</li>
-     * <li>Unable to allocate sufficient host memory for the staging buffer</li>
-     * </ul>
-     *
-     * @param bitmap the source bitmap
-     * @param mipmapped whether to generate mipmaps
-     * @return image, or null if failed
-     * @throws NullPointerException  no GPU context
-     * @throws IllegalStateException not call from UI thread
-     */
-    @Nullable
-    public static Image createTextureFromBitmap(Bitmap bitmap,boolean mipmapped) {
-        if (bitmap == null || bitmap.isClosed()) {
-            return null;
-        }
-        return createTextureFromBitmap(
-                Core.requireUiRecordingContext(),
-                bitmap,
-                mipmapped
-        );
+    private Image(@SharedPtr icyllis.arc3d.sketch.Image image, int density) {
+        this(image);
+        mDensity = density;
     }
 
     /**
@@ -131,47 +94,13 @@ public class Image implements AutoCloseable {
      */
     @Nullable
     public static Image createTextureFromBitmap(Bitmap bitmap) {
-        return createTextureFromBitmap(bitmap,false);
-    }
-
-    /**
-     * Create an image that backed by a GPU texture with the given bitmap.
-     * Whether the bitmap is immutable or not, the bitmap can be safely closed
-     * after the call.
-     *
-     * @param recordingContext the recording graphics context on the current thread
-     * @param bitmap           the source bitmap
-     * @param mipmapped        the image will be mipmapped
-     * @return image, or null if failed
-     * @throws NullPointerException  bitmap is null or released
-     * @throws IllegalStateException not call from context thread, or no context
-     */
-    @ApiStatus.Experimental
-    @Nullable
-    public static Image createTextureFromBitmap(@NonNull RecordingContext recordingContext,
-                                                @NonNull Bitmap bitmap, boolean mipmapped) {
-        recordingContext.checkOwnerThread();
-        assert !bitmap.isClosed();
-        @SharedPtr
-        icyllis.arc3d.sketch.Image nativeImage;
-        try {
-            //TODO we previously make all images Mipmapped, but Arc3D currently does not support
-            // Mipmapping correctly
-            nativeImage = icyllis.arc3d.granite.TextureUtils.makeFromPixmap(
-                    recordingContext,
-                    bitmap.getPixmap(),
-                    /*mipmapped*/ mipmapped,
-                    /*budgeted*/ true,
-                    "ImageFromBitmap"
-            );
-        } finally {
-            // Pixels container must be alive!
-            Reference.reachabilityFence(bitmap);
-        }
-        if (nativeImage == null) {
+        if (bitmap == null || bitmap.isClosed()) {
             return null;
         }
-        return new Image(nativeImage); // move
+        return createTextureFromBitmap(
+                Core.requireUiRecordingContext(),
+                bitmap
+        );
     }
 
     /**
@@ -189,13 +118,36 @@ public class Image implements AutoCloseable {
     @Nullable
     public static Image createTextureFromBitmap(@NonNull RecordingContext recordingContext,
                                                 @NonNull Bitmap bitmap) {
-        return createTextureFromBitmap(recordingContext, bitmap, false);
+        recordingContext.checkOwnerThread();
+        assert !bitmap.isClosed();
+        @SharedPtr
+        icyllis.arc3d.sketch.Image nativeImage;
+        try {
+            //TODO we previously make all images Mipmapped, but Arc3D currently does not support
+            // Mipmapping correctly
+            nativeImage = icyllis.arc3d.granite.TextureUtils.makeFromPixmap(
+                    recordingContext,
+                    bitmap.getPixmap(),
+                    /*mipmapped*/ false,
+                    /*budgeted*/ true,
+                    "ImageFromBitmap"
+            );
+        } finally {
+            // Pixels container must be alive!
+            Reference.reachabilityFence(bitmap);
+        }
+        if (nativeImage == null) {
+            return null;
+        }
+        return new Image(nativeImage); // move
     }
 
     /**
      * Creates a new image object representing the target resource image.
      * You should use a single image as the UI texture to avoid each icon creating its own image.
      * Underlying resources are automatically released.
+     * <p>
+     * Do NOT close the returned Image.
      *
      * @param namespace the application namespace
      * @param entry     the sub path to the resource
@@ -342,7 +294,6 @@ public class Image implements AutoCloseable {
      * Returns whether the Image is completely opaque. Returns true if this
      * Image has no alpha channel, or is flagged to be known that all of its
      * pixels are opaque.
-     *
      * @return whether the image is opaque
      */
     public boolean isOpaque() {
@@ -364,6 +315,9 @@ public class Image implements AutoCloseable {
      * will not be able to operate this object, and its GPU resource will be reclaimed
      * as soon as possible after use.
      * <p>
+     * If this Image object was not created by you (for example, from Resources),
+     * then you must <em>not</em> call this method.
+     * <p>
      * When this object becomes phantom-reachable, the system will automatically
      * do this cleanup operation.
      */
@@ -382,6 +336,38 @@ public class Image implements AutoCloseable {
      */
     public boolean isClosed() {
         return mImage == null;
+    }
+
+    @Override
+    public String toString() {
+        return "Image{" +
+                "mImage=" + mImage +
+                ", mDensity=" + mDensity +
+                '}';
+    }
+
+    /**
+     * Create a shallow copy of this image, this is equivalent to creating a
+     * shared owner for the image. You may change the density or close the
+     * returned Image without affecting the original Image.
+     *
+     * @return a shallow copy of image
+     * @throws IllegalStateException this image is already closed
+     */
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    @NonNull
+    public final Image clone() {
+        icyllis.arc3d.sketch.Image image;
+        try {
+            // this operation is not atomic
+            image = RefCnt.create(mImage);
+        } finally {
+            Reference.reachabilityFence(this);
+        }
+        if (image == null) {
+            throw new IllegalStateException("Cannot clone a closed image!");
+        }
+        return new Image(image, mDensity);
     }
 
     /**

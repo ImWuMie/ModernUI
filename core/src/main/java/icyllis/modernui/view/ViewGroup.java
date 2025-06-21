@@ -3655,6 +3655,38 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
         }
     }
 
+    /**
+     * @hidden
+     */
+    @Nullable
+    @Override
+    @SuppressWarnings("unchecked")
+    protected <T extends View> T findViewWithTagTraversal(Object tag) {
+        if (tag != null && tag.equals(mTag)) {
+            return (T) this;
+        }
+
+        final View[] where = mChildren;
+        final int len = mChildrenCount;
+
+        for (int i = 0; i < len; i++) {
+            View v = where[i];
+
+            if ((v.mPrivateFlags & PFLAG_IS_ROOT_NAMESPACE) == 0) {
+                v = v.findViewWithTag(tag);
+
+                if (v != null) {
+                    return (T) v;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @hidden
+     */
     @Nullable
     @Override
     @SuppressWarnings("unchecked")
@@ -3682,6 +3714,9 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
         return null;
     }
 
+    /**
+     * @hidden
+     */
     @Nullable
     @Override
     @SuppressWarnings("unchecked")
@@ -4566,11 +4601,11 @@ public abstract class ViewGroup extends View implements ViewParent, ViewManager 
      * This prevents the pressed state from appearing when the user is actually trying to scroll
      * the content.
      * <p>
-     * The default implementation returns true for compatibility reasons. Subclasses that do
-     * not scroll should generally override this method and return false.
+     * The default implementation returns false. Subclasses that do scroll should override this
+     * method and return true.
      */
     public boolean shouldDelayChildPressedState() {
-        return true;
+        return false;
     }
 
     @Override

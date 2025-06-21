@@ -18,7 +18,6 @@
 
 package icyllis.modernui;
 
-import icyllis.arc3d.core.SamplingOptions;
 import icyllis.modernui.animation.AnimationUtils;
 import icyllis.modernui.animation.Animator;
 import icyllis.modernui.animation.AnimatorListener;
@@ -35,7 +34,12 @@ import icyllis.modernui.core.Context;
 import icyllis.modernui.core.Core;
 import icyllis.modernui.fragment.Fragment;
 import icyllis.modernui.graphics.*;
-import icyllis.modernui.graphics.drawable.*;
+import icyllis.modernui.graphics.drawable.BuiltinIconDrawable;
+import icyllis.modernui.graphics.drawable.ColorDrawable;
+import icyllis.modernui.graphics.drawable.Drawable;
+import icyllis.modernui.graphics.drawable.ImageDrawable;
+import icyllis.modernui.graphics.drawable.ShapeDrawable;
+import icyllis.modernui.graphics.drawable.StateListDrawable;
 import icyllis.modernui.graphics.text.FontFamily;
 import icyllis.modernui.graphics.text.LineBreakConfig;
 import icyllis.modernui.graphics.text.ShapedText;
@@ -57,6 +61,7 @@ import icyllis.modernui.text.style.URLSpan;
 import icyllis.modernui.text.style.UnderlineSpan;
 import icyllis.modernui.util.DataSet;
 import icyllis.modernui.util.FloatProperty;
+import icyllis.modernui.util.StateSet;
 import icyllis.modernui.view.Gravity;
 import icyllis.modernui.view.KeyEvent;
 import icyllis.modernui.view.LayoutInflater;
@@ -74,11 +79,13 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
 import java.util.List;
 
-import static icyllis.modernui.ModernUI.LOGGER;
+import static icyllis.modernui.ModernUI.*;
 import static icyllis.modernui.view.ViewGroup.LayoutParams.*;
 
 /**
@@ -168,7 +175,7 @@ public class TestFragment extends Fragment {
             }
         });*/
         {
-            var params = new FrameLayout.LayoutParams(base.dp(1920), base.dp(1080));
+            var params = new FrameLayout.LayoutParams(base.dp(960), base.dp(540));
             params.gravity = Gravity.CENTER;
             base.setLayoutParams(params);
         }
@@ -320,11 +327,7 @@ public class TestFragment extends Fragment {
 
         ObjectAnimator mGoodAnim;
 
-        boolean a = false;
-        float rad = 50;
-        Image mTestImage;
-        Matrix mTestMatrix;
-        Shader mTestImageShader;
+        ImageShader mTestImageShader;
         LinearGradient mTestLinearGrad;
         AngularGradient mTestAngularGrad;
 
@@ -454,19 +457,18 @@ public class TestFragment extends Fragment {
                 mGoodAnim = anim;
             }
 
-            try (Bitmap bitmap = BitmapFactory.decodePath(Path.of("E:/test.png"))) {
-                Image image = Image.createTextureFromBitmap(bitmap,true);
+            /*try (Bitmap bitmap = BitmapFactory.decodePath(Path.of("E:/flux_core.png"))) {
+                Image image = Image.createTextureFromBitmap(bitmap);
                 if (image != null) {
-                    mTestImage = image;
-                    var matrix = new Matrix();
-                    matrix.setScale(3f,3f);
-                    mTestMatrix = matrix;
-                    mTestImageShader = new MipmapBlurShader(image,50f,matrix);
+                    Matrix scalingMatrix = new Matrix();
+                    scalingMatrix.setScale(3, 3);
+                    mTestImageShader = new ImageShader(image, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT,
+                            ImageShader.FILTER_POINT, scalingMatrix);
                 } else {
                     LOGGER.warn("Failed to create image");
                 }
             } catch (IOException ignored) {
-            }
+            }*/
 
             mTestLinearGrad = new LinearGradient(
                     0, 0, 128, 0,
@@ -492,7 +494,7 @@ public class TestFragment extends Fragment {
                 LayoutParams p;
                 if (i == 1) {
                     Button button = new Button(getContext(), null, null,
-                            R.style.Widget_Material3_Button_ElevatedButton);
+                            R.style.Widget_Material3_Button_OutlinedButton);
                     button.setText("Play A Music!");
                     button.setOnClickListener(__ -> {
                         if (mGoodAnim != null) {
@@ -643,6 +645,7 @@ public class TestFragment extends Fragment {
                             ViewGroup.LayoutParams.WRAP_CONTENT);
                 } else if (i == 6) {
                     CheckBox checkBox = new CheckBox(getContext());
+                    checkBox.setCheckedState(CheckBox.STATE_INDETERMINATE);
                     v = checkBox;
                     checkBox.setText("Checkbox 0");
                     checkBox.setTooltipText("Hello, this is a tooltip.");
@@ -660,7 +663,7 @@ public class TestFragment extends Fragment {
                     spinner.setMinimumWidth(dp(240));
                 } else if (i == 11) {
                     var seekbar = new SeekBar(getContext(), null, null,
-                            R.style.Widget_Material3_SeekBar_Discrete);
+                            R.style.Widget_Material3_SeekBar_Discrete_Slider);
                     seekbar.setMax(10);
                     seekbar.setUserAnimationEnabled(true);
                     v = seekbar;
@@ -680,19 +683,30 @@ public class TestFragment extends Fragment {
                     p = new LayoutParams(WRAP_CONTENT, WRAP_CONTENT);
                     mProgressBar2 = progressBar;
                 } else if (i == 14) {
-                    CheckableImageButton button = new CheckableImageButton(getContext());
-                    button.setImageDrawable(new BuiltinIconDrawable(getContext().getResources(),
-                            BuiltinIconDrawable.KEYBOARD_ARROW_LEFT));
-                    button.setTooltipTextOn("Switch to dark mode");
-                    button.setTooltipTextOff("Switch to light mode");
-                    button.setCheckable(true);
+                    CheckableImageButton button = new CheckableImageButton(getContext(),
+                            null, null, R.style.Widget_Material3_Button_IconButton);
+                    var icon = new StateListDrawable();
+                    icon.addState(new int[]{R.attr.state_checked}, new BuiltinIconDrawable(getContext().getResources(),
+                            BuiltinIconDrawable.KEYBOARD_ARROW_UP));
+                    icon.addState(StateSet.WILD_CARD, new BuiltinIconDrawable(getContext().getResources(),
+                            BuiltinIconDrawable.KEYBOARD_ARROW_DOWN));
+                    button.setImageDrawable(icon);
+                    button.setTooltipTextOn("Collapse this card");
+                    button.setTooltipTextOff("Expand this card");
                     v = button;
                     p = new LayoutParams(WRAP_CONTENT, WRAP_CONTENT);
                 } else {
                     Button button;
                     if (i < 6) {
-                        button = new Button(getContext(), null, null, R.style.Widget_Material3_Button_TonalButton);
-                        button.setText("Tonal button " + i);
+                        button = new ToggleButton(getContext(), null, null, R.style.Widget_Material3_Button_ElevatedButton);
+                        var icon = new BuiltinIconDrawable(getContext().getResources(),
+                                BuiltinIconDrawable.CHECK, 18);
+                        icon.setTintList(button.getTextColors());
+                        button.setCompoundDrawablePadding(dp(8));
+                        button.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                                icon, null, null, null
+                        );
+                        button.setText("Elevated button " + i);
                         button.setOnClickListener(__ -> {
                             int newVisibility = mProgressBar1.getVisibility() == View.VISIBLE ? View.GONE :
                                     View.VISIBLE;
@@ -761,13 +775,6 @@ public class TestFragment extends Fragment {
                     dp(120)));
             setClipToPadding(false);
 
-            setBackground(new Drawable() {
-                @Override
-                public void draw(Canvas canvas) {
-                    _draw(canvas);
-                }
-            });
-
             //addView(new DView(ITimeInterpolator.VISCOUS_FLUID, 30), new LinearLayout.LayoutParams(60, 20));
             /*cAnim = new Animation(200)
                     .applyTo(new Applier(20, 0, () -> this.c, v -> this.c = v)
@@ -827,6 +834,7 @@ public class TestFragment extends Fragment {
             //changeRadioButtons(9, 0);
 
             setLayoutTransition(new LayoutTransition());
+            //setWillNotDraw(false);
         }
 
         private void changeRadioButtons(int id, int count) {
@@ -880,35 +888,86 @@ public class TestFragment extends Fragment {
         @Override
         protected void onDetachedFromWindow() {
             super.onDetachedFromWindow();
-            if (mTestImageShader != null) {
+            /*if (mTestImageShader != null) {
                 mTestImageShader.release();
                 mTestImageShader = null;
-            }
+            }*/
         }
 
-        private void _draw(@Nonnull Canvas canvas) {
+        @Override
+        protected void onDraw(@Nonnull Canvas canvas) {
             super.onDraw(canvas);
-//            if (true) {
-//                return;
-//            }
+            if (true) {
+                return;
+            }
 
             Paint paint = Paint.obtain();
             paint.setColor(colorPrimary);
+            paint.setStyle(Paint.FILL);
+            canvas.drawRoundRect(6, 90, 46, 104, 7, paint);
 
+            paint.setStyle(Paint.STROKE);
+            paint.setStrokeWidth(4.0f);
             canvas.save();
-            paint.setShader(mTestImageShader);
-
-            if ((rad += 1f) > 500) {
-                rad = 1f;
-            }
-
-            mTestImageShader.release();
-            mTestImageShader = new MipmapBlurShader(mTestImage,rad,mTestMatrix);
-            invalidate();
+            canvas.rotate(-45);
+            canvas.drawRoundRect(6, 110, 86, 124, 6, paint);
 
             paint.setStyle(Paint.FILL);
-            canvas.drawRect(0,0, 1920, 1080, paint);
+            canvas.drawRect(6, 126, 86, 156, paint);
             canvas.restore();
+
+            canvas.drawLine(560, 20, 600, 100, 10, paint);
+
+            canvas.drawLineListMesh(sLinePoints, sLineColors, paint);
+            //canvas.drawPointListMesh(sLinePoints, sLineColors, paint);
+            canvas.drawTriangleListMesh(sTrianglePoints, sTriangleColors, paint);
+
+            //canvas.drawRoundImage(ICON, 6, 160, 166, 320, iconRadius, paint);
+
+            paint.setStyle(Paint.STROKE);
+            canvas.drawPie(100, 200, 50, 60, 120, paint);
+            float s1 = (float) Math.sin(AnimationUtils.currentAnimationTimeMillis() / 300D);
+            canvas.drawPie(350, 94, 55, 180 + 20 * s1, 100 + 50 * s1 * s1, paint);
+
+            paint.setStrokeWidth(10.0f);
+            canvas.drawRect(200, 300, 500, 400, paint);
+            paint.setStrokeCap(Paint.CAP_SQUARE);
+            canvas.drawRect(200, 450, 500, 550, paint);
+
+            /*canvas.save();
+            canvas.translate(400, 100);
+            paint.setShader(mTestImageShader);
+            paint.setStyle(Paint.FILL);
+            canvas.drawRoundRect(-48, 0, 144, 192, 96, paint);
+            canvas.translate(0, 200);
+            paint.setShader(mTestLinearGrad);
+            paint.setDither(true);
+            canvas.drawRoundRect(-192, 0, 192, 96, 32, paint);
+            canvas.translate(-200, 200);
+            paint.setShader(mTestAngularGrad);
+            canvas.drawRoundRect(-100, -100, 100, 100, 25, paint);
+            paint.setDither(false);
+            paint.setStyle(Paint.STROKE);
+            paint.setShader(null);
+            canvas.restore();*/
+
+            paint.setStrokeWidth(40.0f);
+            //paint.setSmoothWidth(40.0f);
+            //canvas.drawArc(80, 400, 60, arcStart, arcStart - arcEnd, paint);
+            paint.setStrokeCap(Paint.CAP_BUTT);
+            canvas.drawArc(80, 400, 50, 60, 240, paint);
+            canvas.drawBezier(80, 400, 180, 420, 80, 600, paint);
+
+            paint.setStyle(Paint.FILL);
+            canvas.drawCircle(80, 700, 60, paint);
+
+            //paint.setSmoothWidth(0.0f);
+
+            paint.setStyle(Paint.FILL);
+            paint.setAlpha((int) (roundRectAlpha * 192));
+            canvas.drawRoundRect(20, 480, 20 + mRoundRectLen * 1.6f, 480 + mRoundRectLen, 10, paint);
+            paint.setAlpha(255);
+
             paint.recycle();
         }
 
