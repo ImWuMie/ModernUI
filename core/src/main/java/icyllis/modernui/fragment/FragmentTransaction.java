@@ -1,6 +1,6 @@
 /*
  * Modern UI.
- * Copyright (C) 2019-2021 BloCamLimb. All rights reserved.
+ * Copyright (C) 2020-2025 BloCamLimb. All rights reserved.
  *
  * Modern UI is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,17 +14,36 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with Modern UI. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * This file incorporates work covered by the following copyright and
+ * permission notice:
+ *
+ *   Copyright (C) 2018 The Android Open Source Project
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
  */
 
 package icyllis.modernui.fragment;
 
+import icyllis.modernui.annotation.NonNull;
+import icyllis.modernui.annotation.Nullable;
 import icyllis.modernui.lifecycle.Lifecycle;
+import icyllis.modernui.resources.ResourceId;
 import icyllis.modernui.util.DataSet;
 import icyllis.modernui.view.View;
 import icyllis.modernui.view.ViewGroup;
+import org.intellij.lang.annotations.MagicConstant;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 
@@ -51,10 +70,10 @@ public abstract class FragmentTransaction {
         int mCmd;
         Fragment mFragment;
         boolean mFromExpandedOp;
-        int mEnterAnim;
-        int mExitAnim;
-        int mPopEnterAnim;
-        int mPopExitAnim;
+        ResourceId mEnterAnim;
+        ResourceId mExitAnim;
+        ResourceId mPopEnterAnim;
+        ResourceId mPopExitAnim;
         Lifecycle.State mOldMaxState;
         Lifecycle.State mCurrentMaxState;
 
@@ -77,7 +96,7 @@ public abstract class FragmentTransaction {
             this.mCurrentMaxState = Lifecycle.State.RESUMED;
         }
 
-        Op(int cmd, @Nonnull Fragment fragment, Lifecycle.State state) {
+        Op(int cmd, @NonNull Fragment fragment, Lifecycle.State state) {
             this.mCmd = cmd;
             this.mFragment = fragment;
             this.mFromExpandedOp = false;
@@ -85,7 +104,7 @@ public abstract class FragmentTransaction {
             this.mCurrentMaxState = state;
         }
 
-        Op(@Nonnull Op op) {
+        Op(@NonNull Op op) {
             this.mCmd = op.mCmd;
             this.mFragment = op.mFragment;
             this.mFromExpandedOp = op.mFromExpandedOp;
@@ -101,10 +120,10 @@ public abstract class FragmentTransaction {
     private final FragmentFactory mFragmentFactory;
 
     ArrayList<Op> mOps = new ArrayList<>();
-    int mEnterAnim;
-    int mExitAnim;
-    int mPopEnterAnim;
-    int mPopExitAnim;
+    ResourceId mEnterAnim;
+    ResourceId mExitAnim;
+    ResourceId mPopEnterAnim;
+    ResourceId mPopExitAnim;
     int mTransition;
     boolean mAddToBackStack;
     boolean mAllowAddToBackStack = true;
@@ -117,7 +136,7 @@ public abstract class FragmentTransaction {
 
     ArrayList<Runnable> mCommitRunnables;
 
-    FragmentTransaction(@Nonnull FragmentFactory fragmentFactory) {
+    FragmentTransaction(@NonNull FragmentFactory fragmentFactory) {
         mFragmentFactory = fragmentFactory;
     }
 
@@ -129,8 +148,8 @@ public abstract class FragmentTransaction {
         op.mPopExitAnim = mPopExitAnim;
     }
 
-    @Nonnull
-    private Fragment createFragment(@Nonnull Class<? extends Fragment> fragmentClass,
+    @NonNull
+    private Fragment createFragment(@NonNull Class<? extends Fragment> fragmentClass,
                                     @Nullable DataSet args) {
         Fragment fragment = mFragmentFactory.instantiate(fragmentClass);
         if (args != null) {
@@ -142,8 +161,8 @@ public abstract class FragmentTransaction {
     /**
      * Calls {@link #add(int, Class, DataSet, String)} with a 0 containerViewId.
      */
-    @Nonnull
-    public final FragmentTransaction add(@Nonnull Class<? extends Fragment> fragmentClass,
+    @NonNull
+    public final FragmentTransaction add(@NonNull Class<? extends Fragment> fragmentClass,
                                          @Nullable DataSet args, @Nullable String tag) {
         return add(createFragment(fragmentClass, args), tag);
     }
@@ -151,8 +170,8 @@ public abstract class FragmentTransaction {
     /**
      * Calls {@link #add(int, Fragment, String)} with a 0 containerViewId.
      */
-    @Nonnull
-    public FragmentTransaction add(@Nonnull Fragment fragment, @Nullable String tag) {
+    @NonNull
+    public FragmentTransaction add(@NonNull Fragment fragment, @Nullable String tag) {
         doAddOp(0, fragment, tag, OP_ADD);
         return this;
     }
@@ -160,17 +179,17 @@ public abstract class FragmentTransaction {
     /**
      * Calls {@link #add(int, Class, DataSet, String)} with a null tag.
      */
-    @Nonnull
+    @NonNull
     public final FragmentTransaction add(int containerViewId,
-                                         @Nonnull Class<? extends Fragment> fragmentClass, @Nullable DataSet args) {
+                                         @NonNull Class<? extends Fragment> fragmentClass, @Nullable DataSet args) {
         return add(containerViewId, createFragment(fragmentClass, args));
     }
 
     /**
      * Calls {@link #add(int, Fragment, String)} with a null tag.
      */
-    @Nonnull
-    public FragmentTransaction add(int containerViewId, @Nonnull Fragment fragment) {
+    @NonNull
+    public FragmentTransaction add(int containerViewId, @NonNull Fragment fragment) {
         doAddOp(containerViewId, fragment, null, OP_ADD);
         return this;
     }
@@ -190,9 +209,9 @@ public abstract class FragmentTransaction {
      *                        FragmentManager.findFragmentByTag(String)}.
      * @return Returns the same FragmentTransaction instance.
      */
-    @Nonnull
+    @NonNull
     public final FragmentTransaction add(int containerViewId,
-                                         @Nonnull Class<? extends Fragment> fragmentClass,
+                                         @NonNull Class<? extends Fragment> fragmentClass,
                                          @Nullable DataSet args, @Nullable String tag) {
         return add(containerViewId, createFragment(fragmentClass, args), tag);
     }
@@ -211,21 +230,21 @@ public abstract class FragmentTransaction {
      *                        FragmentManager.findFragmentByTag(String)}.
      * @return Returns the same FragmentTransaction instance.
      */
-    @Nonnull
-    public FragmentTransaction add(int containerViewId, @Nonnull Fragment fragment,
+    @NonNull
+    public FragmentTransaction add(int containerViewId, @NonNull Fragment fragment,
                                    @Nullable String tag) {
         doAddOp(containerViewId, fragment, tag, OP_ADD);
         return this;
     }
 
-    FragmentTransaction add(@Nonnull ViewGroup container, @Nonnull Fragment fragment,
+    FragmentTransaction add(@NonNull ViewGroup container, @NonNull Fragment fragment,
                             @Nullable String tag) {
         fragment.mContainer = container;
         return add(container.getId(), fragment, tag);
     }
 
     //TODO need update
-    void doAddOp(int containerViewId, @Nonnull Fragment fragment, @Nullable String tag, int cmd) {
+    void doAddOp(int containerViewId, @NonNull Fragment fragment, @Nullable String tag, int cmd) {
         final Class<?> fragmentClass = fragment.getClass();
         final int modifiers = fragmentClass.getModifiers();
         if (fragmentClass.isAnonymousClass() || !Modifier.isPublic(modifiers)
@@ -263,17 +282,17 @@ public abstract class FragmentTransaction {
     /**
      * Calls {@link #replace(int, Class, DataSet, String)} with a null tag.
      */
-    @Nonnull
+    @NonNull
     public final FragmentTransaction replace(int containerViewId,
-                                             @Nonnull Class<? extends Fragment> fragmentClass, @Nullable DataSet args) {
+                                             @NonNull Class<? extends Fragment> fragmentClass, @Nullable DataSet args) {
         return replace(containerViewId, fragmentClass, args, null);
     }
 
     /**
      * Calls {@link #replace(int, Fragment, String)} with a null tag.
      */
-    @Nonnull
-    public FragmentTransaction replace(int containerViewId, @Nonnull Fragment fragment) {
+    @NonNull
+    public FragmentTransaction replace(int containerViewId, @NonNull Fragment fragment) {
         return replace(containerViewId, fragment, null);
     }
 
@@ -294,9 +313,9 @@ public abstract class FragmentTransaction {
      *                        FragmentManager.findFragmentByTag(String)}.
      * @return Returns the same FragmentTransaction instance.
      */
-    @Nonnull
+    @NonNull
     public final FragmentTransaction replace(int containerViewId,
-                                             @Nonnull Class<? extends Fragment> fragmentClass,
+                                             @NonNull Class<? extends Fragment> fragmentClass,
                                              @Nullable DataSet args, @Nullable String tag) {
         return replace(containerViewId, createFragment(fragmentClass, args), tag);
     }
@@ -316,8 +335,8 @@ public abstract class FragmentTransaction {
      *                        FragmentManager.findFragmentByTag(String)}.
      * @return Returns the same FragmentTransaction instance.
      */
-    @Nonnull
-    public FragmentTransaction replace(int containerViewId, @Nonnull Fragment fragment,
+    @NonNull
+    public FragmentTransaction replace(int containerViewId, @NonNull Fragment fragment,
                                        @Nullable String tag) {
         if (containerViewId == 0) {
             throw new IllegalArgumentException("Must use non-zero containerViewId");
@@ -333,8 +352,8 @@ public abstract class FragmentTransaction {
      * @param fragment The fragment to be removed.
      * @return Returns the same FragmentTransaction instance.
      */
-    @Nonnull
-    public FragmentTransaction remove(@Nonnull Fragment fragment) {
+    @NonNull
+    public FragmentTransaction remove(@NonNull Fragment fragment) {
         addOp(new Op(OP_REMOVE, fragment));
 
         return this;
@@ -348,8 +367,8 @@ public abstract class FragmentTransaction {
      * @param fragment The fragment to be hidden.
      * @return Returns the same FragmentTransaction instance.
      */
-    @Nonnull
-    public FragmentTransaction hide(@Nonnull Fragment fragment) {
+    @NonNull
+    public FragmentTransaction hide(@NonNull Fragment fragment) {
         addOp(new Op(OP_HIDE, fragment));
 
         return this;
@@ -363,8 +382,8 @@ public abstract class FragmentTransaction {
      * @param fragment The fragment to be shown.
      * @return Returns the same FragmentTransaction instance.
      */
-    @Nonnull
-    public FragmentTransaction show(@Nonnull Fragment fragment) {
+    @NonNull
+    public FragmentTransaction show(@NonNull Fragment fragment) {
         addOp(new Op(OP_SHOW, fragment));
 
         return this;
@@ -380,8 +399,8 @@ public abstract class FragmentTransaction {
      * @param fragment The fragment to be detached.
      * @return Returns the same FragmentTransaction instance.
      */
-    @Nonnull
-    public FragmentTransaction detach(@Nonnull Fragment fragment) {
+    @NonNull
+    public FragmentTransaction detach(@NonNull Fragment fragment) {
         addOp(new Op(OP_DETACH, fragment));
 
         return this;
@@ -396,8 +415,8 @@ public abstract class FragmentTransaction {
      * @param fragment The fragment to be attached.
      * @return Returns the same FragmentTransaction instance.
      */
-    @Nonnull
-    public FragmentTransaction attach(@Nonnull Fragment fragment) {
+    @NonNull
+    public FragmentTransaction attach(@NonNull Fragment fragment) {
         addOp(new Op(OP_ATTACH, fragment));
 
         return this;
@@ -419,7 +438,7 @@ public abstract class FragmentTransaction {
      * @param fragment the fragment to set as the primary navigation fragment
      * @return the same FragmentTransaction instance
      */
-    @Nonnull
+    @NonNull
     public FragmentTransaction setPrimaryNavigationFragment(@Nullable Fragment fragment) {
         addOp(new Op(OP_SET_PRIMARY_NAV, fragment));
 
@@ -443,9 +462,9 @@ public abstract class FragmentTransaction {
      * @param state    the ceiling state for the fragment.
      * @return the same FragmentTransaction instance
      */
-    @Nonnull
-    public FragmentTransaction setMaxLifecycle(@Nonnull Fragment fragment,
-                                               @Nonnull Lifecycle.State state) {
+    @NonNull
+    public FragmentTransaction setMaxLifecycle(@NonNull Fragment fragment,
+                                               @NonNull Lifecycle.State state) {
         addOp(new Op(OP_SET_MAX_LIFECYCLE, fragment, state));
         return this;
     }
@@ -492,12 +511,18 @@ public abstract class FragmentTransaction {
 
     /**
      * Fragment is being added onto the stack with Activity open transition.
+     *
+     * @deprecated not used by framework
      */
+    @Deprecated
     public static final int TRANSIT_FRAGMENT_MATCH_ACTIVITY_OPEN = 4 | TRANSIT_ENTER_MASK;
 
     /**
      * Fragment is being removed from the stack with Activity close transition.
+     *
+     * @deprecated not used by framework
      */
+    @Deprecated
     public static final int TRANSIT_FRAGMENT_MATCH_ACTIVITY_CLOSE = 5 | TRANSIT_EXIT_MASK;
 
     /**
@@ -523,9 +548,9 @@ public abstract class FragmentTransaction {
      * @param exit  An animation or animator resource ID used for the exit animation on the
      *              view of the fragment being removed or detached.
      */
-    @Nonnull
-    public FragmentTransaction setCustomAnimations(int enter, int exit) {
-        return setCustomAnimations(enter, exit, 0, 0);
+    @NonNull
+    public FragmentTransaction setCustomAnimations(@Nullable ResourceId enter, @Nullable ResourceId exit) {
+        return setCustomAnimations(enter, exit, null, null);
     }
 
     /**
@@ -558,8 +583,9 @@ public abstract class FragmentTransaction {
      *                 view of the fragment being removed or detached caused by
      *                 {@link FragmentManager#popBackStack()} or similar methods.
      */
-    @Nonnull
-    public FragmentTransaction setCustomAnimations(int enter, int exit, int popEnter, int popExit) {
+    @NonNull
+    public FragmentTransaction setCustomAnimations(@Nullable ResourceId enter, @Nullable ResourceId exit,
+                                                   @Nullable ResourceId popEnter, @Nullable ResourceId popExit) {
         mEnterAnim = enter;
         mExitAnim = exit;
         mPopEnterAnim = popEnter;
@@ -576,11 +602,11 @@ public abstract class FragmentTransaction {
      *                      appearing Fragment.
      * @param name          The transitionName for a View in an appearing Fragment to match to the shared
      *                      element.
-     * @see Fragment#setSharedElementReturnTransition(Object)
-     * @see Fragment#setSharedElementEnterTransition(Object)
+     * @see Fragment#setSharedElementReturnTransition(icyllis.modernui.transition.Transition)
+     * @see Fragment#setSharedElementEnterTransition(icyllis.modernui.transition.Transition)
      */
-    @Nonnull
-    public FragmentTransaction addSharedElement(@Nonnull View sharedElement, @Nonnull String name) {
+    @NonNull
+    public FragmentTransaction addSharedElement(@NonNull View sharedElement, @NonNull String name) {
         String transitionName = sharedElement.getTransitionName();
         if (transitionName == null) {
             throw new IllegalArgumentException("Unique transitionNames are required for all"
@@ -607,8 +633,9 @@ public abstract class FragmentTransaction {
      * one of {@link #TRANSIT_NONE}, {@link #TRANSIT_FRAGMENT_OPEN},
      * {@link #TRANSIT_FRAGMENT_CLOSE}, or {@link #TRANSIT_FRAGMENT_FADE}.
      */
-    @Nonnull
-    public FragmentTransaction setTransition(int transition) {
+    @NonNull
+    public FragmentTransaction setTransition(@MagicConstant(intValues = {TRANSIT_NONE, TRANSIT_FRAGMENT_OPEN,
+            TRANSIT_FRAGMENT_CLOSE, TRANSIT_FRAGMENT_FADE}) int transition) {
         mTransition = transition;
         return this;
     }
@@ -624,7 +651,7 @@ public abstract class FragmentTransaction {
      *
      * @param name An optional name for this back stack state, or null.
      */
-    @Nonnull
+    @NonNull
     public FragmentTransaction addToBackStack(@Nullable String name) {
         if (!mAllowAddToBackStack) {
             throw new IllegalStateException(
@@ -651,7 +678,7 @@ public abstract class FragmentTransaction {
      * addToBackStack will throw {@link IllegalStateException}. If addToBackStack
      * has already been called, this method will throw IllegalStateException.
      */
-    @Nonnull
+    @NonNull
     public FragmentTransaction disallowAddToBackStack() {
         if (mAddToBackStack) {
             throw new IllegalStateException(
@@ -689,7 +716,7 @@ public abstract class FragmentTransaction {
      *                          or {@code false} to disable optimizing out redundant
      *                          operations on this transaction.
      */
-    @Nonnull
+    @NonNull
     public FragmentTransaction setReorderingAllowed(boolean reorderingAllowed) {
         mReorderingAllowed = reorderingAllowed;
         return this;
@@ -716,8 +743,8 @@ public abstract class FragmentTransaction {
      * @return this FragmentTransaction
      * @throws IllegalStateException if {@link #addToBackStack(String)} has been called
      */
-    @Nonnull
-    public FragmentTransaction runOnCommit(@Nonnull Runnable runnable) {
+    @NonNull
+    public FragmentTransaction runOnCommit(@NonNull Runnable runnable) {
         disallowAddToBackStack();
         if (mCommitRunnables == null) {
             mCommitRunnables = new ArrayList<>();
