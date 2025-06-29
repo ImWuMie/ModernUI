@@ -2,19 +2,8 @@
 [![MavenCore](https://img.shields.io/badge/dynamic/xml?color=orange&label=Core%20Version&query=%2Fmetadata%2Fversioning%2Flatest&url=https%3A%2F%2Fmaven.izzel.io%2Freleases%2Ficyllis%2Fmodernui%2FModernUI-Core%2Fmaven-metadata.xml)]()
 [![Discord](https://img.shields.io/discord/696234198767501363?color=green&label=Discord&style=flat)](https://discord.gg/kmyGKt2)
 
-### 添加shader
+### 添加
   - Mipmap Blur
-
-### Screenshots
-Mipmap Blur
-![MipmapBlur.png](https://img.picui.cn/free/2025/05/02/6814d2c992816.png)
-   test
-[![1879273822-Cache-7970cf07a830c4d-1746195235880-wifi-0.jpg](https://i.postimg.cc/nV1wkhgW/1879273822-Cache-7970cf07a830c4d-1746195235880-wifi-0.jpg)](https://postimg.cc/14fHRs90)
- fcl
-[![2025-05-03-10-21-07.png](https://i.postimg.cc/cCDcQVv9/2025-05-03-10-21-07.png)](https://postimg.cc/xNzHQpyM)
-
-### 下一步
-  - 优化mipmap blur (写成💩了
 
 ### Description
 Modern UI (by Icyllis Milica) is a desktop application framework designed for standalone 2D and 3D rendering software development.
