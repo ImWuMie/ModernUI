@@ -947,7 +947,6 @@ public class ShaderCodeSource {
                                      float radius,
                                      sampler2D s) {
                 return _mipmap_blur_sample_blured(coords * invImageSize, radius, 0.5,s);
-//return texture(s,coords * invImageSize);
             }
             """;
     /**
@@ -1473,7 +1472,7 @@ public class ShaderCodeSource {
             """;
 
     private final FragmentStage[] mBuiltinCodeSnippets =
-            new FragmentStage[kBuiltinStageIDCount];
+            new FragmentStage[256];
 
     {
         mBuiltinCodeSnippets[kError_BuiltinStageID] = new FragmentStage(
@@ -1984,11 +1983,11 @@ public class ShaderCodeSource {
             return null;
         }
 
-        if (stageId < kBuiltinStageIDCount) {
+//        if (stageId < kBuiltinStageIDCount) {
             return mBuiltinCodeSnippets[stageId];
-        }
+//        }
 
-        return null;
+//        return null;
     }
 
     public static String getMangledName(String baseName, int manglingSuffix) {

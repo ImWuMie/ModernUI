@@ -71,7 +71,7 @@ public class FragmentStage {
             kCompose_BuiltinStageID = 27,
 
     // Custom Stages
-    kMipmapBlur_BuiltinStageID = 28;
+    kMipmapBlur_BuiltinStageID = 128;
 
     // Fixed blend modes hard code a specific blend function into the shader tree. This can be
     // valuable when an internal effect is known to always do a certain blend and we want to
