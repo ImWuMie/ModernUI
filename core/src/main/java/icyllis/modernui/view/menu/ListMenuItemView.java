@@ -43,7 +43,7 @@ import icyllis.modernui.graphics.Rect;
 import icyllis.modernui.graphics.drawable.BuiltinIconDrawable;
 import icyllis.modernui.graphics.drawable.Drawable;
 import icyllis.modernui.graphics.drawable.ShapeDrawable;
-import icyllis.modernui.resources.ResourceId;
+import icyllis.modernui.resources.Resources;
 import icyllis.modernui.resources.TypedValue;
 import icyllis.modernui.view.Gravity;
 import icyllis.modernui.view.View;
@@ -84,13 +84,14 @@ public class ListMenuItemView extends LinearLayout
 
     public ListMenuItemView(Context context) {
         super(context);
+        final Resources.Theme theme = context.getTheme();
         setMinimumWidth(dp(112));
         setOrientation(VERTICAL);
         var divider = new ShapeDrawable();
         divider.setShape(ShapeDrawable.HLINE);
         divider.setSize(-1, dp(3));
         final TypedValue value = new TypedValue();
-        if (context.getTheme().resolveAttribute(R.ns, R.attr.colorOutlineVariant, value, true))
+        if (theme.resolveAttribute(R.ns, R.attr.colorOutlineVariant, value, true))
             divider.setStroke(dp(1), value.data);
         setDividerDrawable(divider);
         setDividerPadding(dp(2));
@@ -108,7 +109,7 @@ public class ListMenuItemView extends LinearLayout
             {
                 mTitleView = new TextView(getContext());
                 mTitleView.setId(R.id.title);
-                mTitleView.setTextAppearance(ResourceId.attr(R.ns, R.attr.textAppearanceBodyMedium));
+                mTitleView.setTextAppearance(R.attr.textAppearanceBodyMedium);
                 mTitleView.setSingleLine();
                 mTitleView.setDuplicateParentStateEnabled(true);
                 mTitleView.setTextAlignment(TEXT_ALIGNMENT_VIEW_START);
@@ -121,7 +122,7 @@ public class ListMenuItemView extends LinearLayout
 
             {
                 mShortcutView = new TextView(getContext());
-                mShortcutView.setTextAppearance(ResourceId.attr(R.ns, R.attr.textAppearanceBodySmall));
+                mShortcutView.setTextAppearance(R.attr.textAppearanceBodySmall);
                 mShortcutView.setSingleLine();
                 mShortcutView.setDuplicateParentStateEnabled(true);
                 mShortcutView.setTextAlignment(TEXT_ALIGNMENT_VIEW_START);
@@ -140,9 +141,8 @@ public class ListMenuItemView extends LinearLayout
                         BuiltinIconDrawable.KEYBOARD_ARROW_RIGHT, 18);
                 icon.setAutoMirrored(true);
                 mSubMenuArrowView.setImageDrawable(icon);
-                if (context.getTheme().resolveAttribute(R.ns, R.attr.textColorSecondary, value, true))
-                    mSubMenuArrowView.setImageTintList(context.getResources().loadColorStateList(value,
-                            context.getTheme()));
+                if (theme.resolveAttribute(R.ns, R.attr.textColorSecondary, value, true))
+                    mSubMenuArrowView.setImageTintList(context.getResources().loadColorStateList(value, theme));
 
                 var params = new LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT);
                 params.gravity = Gravity.CENTER;
@@ -344,7 +344,7 @@ public class ListMenuItemView extends LinearLayout
     }
 
     private void insertRadioButton() {
-        mRadioButton = new RadioButton(getContext(), null, ResourceId.attr(R.ns, R.attr.radioButtonStyleMenuItem));
+        mRadioButton = new RadioButton(getContext(), null, R.attr.radioButtonStyleMenuItem);
         mRadioButton.setFocusable(false);
         mRadioButton.setClickable(false);
         mRadioButton.setDuplicateParentStateEnabled(true);
@@ -355,7 +355,7 @@ public class ListMenuItemView extends LinearLayout
     }
 
     private void insertCheckBox() {
-        mCheckBox = new CheckBox(getContext(), null, ResourceId.attr(R.ns, R.attr.checkboxStyleMenuItem));
+        mCheckBox = new CheckBox(getContext(), null, R.attr.checkboxStyleMenuItem);
         mCheckBox.setFocusable(false);
         mCheckBox.setClickable(false);
         mCheckBox.setDuplicateParentStateEnabled(true);

@@ -135,16 +135,12 @@ public class ListPopupWindow implements ShowableListMenu {
 
     PopupWindow mPopup;
 
-    @AttrRes
-    private static final ResourceId DEF_STYLE_ATTR =
-            ResourceId.attr(R.ns, R.attr.listPopupWindowStyle);
-
     public ListPopupWindow(@NonNull Context context) {
         this(context, null);
     }
 
     public ListPopupWindow(@NonNull Context context, @Nullable AttributeSet attrs) {
-        this(context, attrs, DEF_STYLE_ATTR);
+        this(context, attrs, R.attr.listPopupWindowStyle);
     }
 
     public ListPopupWindow(@NonNull Context context, @Nullable AttributeSet attrs,
@@ -759,21 +755,13 @@ public class ListPopupWindow implements ShowableListMenu {
             mDropDownList.setOnItemClickListener(mItemClickListener);
             mDropDownList.setFocusable(true);
             mDropDownList.setFocusableInTouchMode(true);
-            mDropDownList.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parent, View view,
-                                           int position, long id) {
-                    if (position != -1) {
-                        DropDownListView dropDownList = mDropDownList;
+            mDropDownList.setOnItemSelectedListener((parent, view, position, id) -> {
+                if (position != -1) {
+                    DropDownListView dropDownList = mDropDownList;
 
-                        if (dropDownList != null) {
-                            dropDownList.setListSelectionHidden(false);
-                        }
+                    if (dropDownList != null) {
+                        dropDownList.setListSelectionHidden(false);
                     }
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> parent) {
                 }
             });
 
